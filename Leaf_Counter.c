@@ -56,7 +56,7 @@ char* votesReadWrite(char* path){
   for(i=0; i<MAX_CANDIDADTES; i++){//initialize candidateVotes array to 0
     candidateVotes[i]=0;
   }
-
+  printf("In votesReadWrite\n");
 	while(1)
 	{
 		thisDir = readdir(direntStream);
@@ -67,13 +67,13 @@ char* votesReadWrite(char* path){
 			int length = strlen(path)+strlen(thisDir->d_name);
 			char* inPath = malloc((length+10)*sizeof(char));	//allocates space for full path name
 			sprintf(inPath, "%s/%s",path,thisDir->d_name);		//creates string for full path
-			// printf("inPath: %s\n",inPath);
+			printf("inPath: %s\n",inPath);
 			input = fopen(inPath, "r");
 
 			length = strlen(path)+strlen(".txt");
 			char* outputPath = malloc((length)*sizeof(char));	//allocates space for full path name
 			sprintf(outputPath, "%s.txt",path);		//creates string for full path
-			// printf("copyPath: %s\n",copyPath);
+			printf("outputPath: %s\n",outputPath);
 			output = fopen(outputPath, "w");
 			char* temp;
 			size_t length2;
@@ -126,7 +126,7 @@ int main(int argc, char** argv){
   }
 
   if(votesFileCheck(argv[1])){//determines if votes.txt exists in the directory
-    printf("%s",filename);
+    // printf("Found Votes.txt\n");
     char* filename=votesReadWrite(argv[1]);
   }
   else{
