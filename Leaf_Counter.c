@@ -21,7 +21,6 @@ returns 0 if it does not exist
 int votesFileCheck(char* path){
   DIR* direntStream = opendir(path);
   struct dirent* thisDir;
-  printf("We are in votesFileCheck\n");
 	while(1)
 	{
 		thisDir = readdir(direntStream);
@@ -29,13 +28,12 @@ int votesFileCheck(char* path){
 			break;
 		}
     else if(thisDir->d_type == DT_REG){//if a file is a regular flie
-      printf("FileName: %s\n", thisDir->d_name);
       if(strcmp(thisDir->d_name, "votes.txt")==0){
         return 1; //found a file with the name votes.txt
       }
     }
-    return 0;
   }
+  return 0;
 }
 
 /************************************************************************
@@ -128,8 +126,8 @@ int main(int argc, char** argv){
   }
 
   if(votesFileCheck(argv[1])){//determines if votes.txt exists in the directory
-    char* filename=votesReadWrite(argv[1]);
     printf("%s",filename);
+    char* filename=votesReadWrite(argv[1]);
   }
   else{
     printf("Not a leaf node.\n");
