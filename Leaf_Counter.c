@@ -63,7 +63,7 @@ char* votesReadWrite(char* path){
 		if(thisDir==NULL){
 			break;
 		}
-		else if(thisDir->d_type == DT_REG && strcmp(thisDir->d_name, "votes.txt")){
+		else if(thisDir->d_type == DT_REG && strcmp(thisDir->d_name, "votes.txt")==0){
 			int length = strlen(path)+strlen(thisDir->d_name);
 			char* inPath = malloc((length+10)*sizeof(char));	//allocates space for full path name
 			sprintf(inPath, "%s/%s",path,thisDir->d_name);		//creates string for full path
@@ -80,6 +80,7 @@ char* votesReadWrite(char* path){
 
 			while(getline(&temp, &length2, input)!= -1)
 			{
+        printf("readline: %s\n",temp);
         for(i=0; i<MAX_CANDIDADTES; i++){
           if(candidateVotes[i]==0){//if we find an empty index in array then we have a new candidate
             candidateVotes[i]++;
