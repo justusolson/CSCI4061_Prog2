@@ -21,16 +21,14 @@ output: 1 if is a leaf, 0 if not a leaf
 int isLeaf(char* path){
   DIR* curdir = opendir(path);
   struct dirent* thisdir;
-  int leaf = NULL;
+  int leaf = 1;
   while(1){
     thisdir = readdir(curdir);
     if(thisdir == NULL){
-      if(leaf == NULL)
-        leaf = 1;
       break;
     }
-    if(strcmp(rd->d_name, ".")!=0 && strcmp(rd->d_name, "..")!=0){
-			if(rd->d_type == DT_DIR){
+    if(strcmp(thisdir->d_name, ".")!=0 && strcmp(thisdir->d_name, "..")!=0){
+			if(thisdir->d_type == DT_DIR){
         leaf = 0;
       }
     }
@@ -59,8 +57,8 @@ void aggregateVotes(char* path){
   // curdir = opendir(path);
   while(1){
     thisdir = readdir(curdir);
-    if(strcmp(rd->d_name, ".")!=0 && strcmp(rd->d_name, "..")!=0){
-      else if(strcmp(rd->d_name, "votes.txt")==0){
+    if(strcmp(thisdir->d_name, ".")!=0 && strcmp(thisdir->d_name, "..")!=0){
+      if(strcmp(thisdir->d_name, "votes.txt")==0){
 
       }
     }
@@ -74,9 +72,23 @@ int main(int argc, char** argv)
     return -1;
   }
   if(isLeaf(argv[1])){
-    // execv();
+    printf("isLeaf\n");
+    char* votespath = malloc(strlen(argv[1])+12);
+    int len = strlen(argv[1]);
+    // printf("last char of argv[1]: %c\n", argv[1][len-1]);
+    if(argv[1][len-1] == '/'){
+      sprintf(votespath, "%svotes.txt", argv[1]);
+    }
+    else {
+      sprintf(votespath, "%s/votes.txt", argv[1]);
+    }
+    printf("execing:\n./Leaf_Counter %s\n", votespath);
+    execl("./Leaf_Counter", "Leaf_Counter", votespath, (char*)NULL);
+    perror("Exec failed.\n");
   }
-  aggregateVotes(argv[1]);
+  else {
+    aggregateVotes(argv[1]);
+  }
 
   return 0;
 }
