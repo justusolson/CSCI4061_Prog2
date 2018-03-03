@@ -1,3 +1,7 @@
+#define NUM_ARGS 1
+#define MAX_CANDIDADTES 100
+#define _GNU_SOURCE
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -7,9 +11,10 @@
 #include <fcntl.h>
 #include <dirent.h>
 #include <string.h>
+#include <time.h>
+#include "makeargv.h"
 
-#define NUM_ARGS 1
-#define MAX_CANDIDADTES 100
+
 
 /************************************************************************
 Function: votesFileCheck
@@ -55,6 +60,7 @@ char* votesReadWrite(char* path){
   int i;
   for(i=0; i<MAX_CANDIDADTES; i++){//initialize candidateVotes array to 0
     candidateVotes[i]=0;
+    candidateNames[i]=malloc(1024*sizeof(char));
   }
   printf("In votesReadWrite\n");
 	while(1)
@@ -75,24 +81,39 @@ char* votesReadWrite(char* path){
 			sprintf(outputPath, "%s.txt",path);		//creates string for full path
 			printf("outputPath: %s\n",outputPath);
 			output = fopen(outputPath, "w");
-			char* temp;
+
+      if(output==NULL){
+        perror("Error opening file\n");
+        return;
+      }
+			char* temp = malloc(1024*sizeof(char));
 			size_t length2;
 
-			while(getline(&temp, &length2, input)!= -1)
-			{
+			while(getline(&temp, &length2, input)!= -1){
+        temp = trimwhitespace(temp);
         printf("readline: %s\n",temp);
         for(i=0; i<MAX_CANDIDADTES; i++){
-          if(candidateVotes[i]==0){//if we find an empty index in array then we have a new candidate
+          printf("i=%d candidate=%s\n", i, candidateNames[i]);
+          printf("i=%d\n", i);
+          if(candidateVotes[i]>0 && strcmp(candidateNames[i],temp)==0){//if they have the same name
+            printf("Existing Candidate\n");
+            candidateVotes[i]++;//add a vote to that candidate
+            printf("Vote for %s at %d\n", candidateNames[i], i);
+            break;
+          }
+          else if(candidateVotes[i]==0){//if we find an empty index in array then we have a new candidate
+            printf("New Candidate\n");
             candidateVotes[i]++;
             candidateNames[i]=temp;
+            printf("New Candidate: %s at %d, %d votes\n",candidateNames[i], i, candidateVotes[i]);
             break;
           }
-          else if(strcmp(candidateNames[i],temp)==0){//if they have the same name
-            candidateVotes[i]++;//add a vote to that candidate
-            break;
-          }
+
+          printf("\n\n");
         }
 			}
+
+      free(temp);
       char* outputString = malloc(MAX_CANDIDADTES*1024*sizeof(char));
       i=0;
       while(candidateVotes[i]>0){
