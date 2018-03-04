@@ -55,14 +55,12 @@ char* votesReadWrite(char* path){
   DIR* direntStream = opendir(path);
 	struct dirent* thisDir;
 	FILE *input, *output;
-  char* candidateNames[MAX_CANDIDADTES];
+  char candidateNames[MAX_CANDIDADTES][1024];
   int candidateVotes[MAX_CANDIDADTES];
   int i;
   for(i=0; i<MAX_CANDIDADTES; i++){//initialize candidateVotes array to 0
     candidateVotes[i]=0;
-    candidateNames[i]=malloc(1024*sizeof(char));
   }
-  printf("In votesReadWrite\n");
 	while(1)
 	{
 		thisDir = readdir(direntStream);
@@ -73,13 +71,11 @@ char* votesReadWrite(char* path){
 			int length = strlen(path)+strlen(thisDir->d_name);
 			char* inPath = malloc((length+10)*sizeof(char));	//allocates space for full path name
 			sprintf(inPath, "%s/%s",path,thisDir->d_name);		//creates string for full path
-			printf("inPath: %s\n",inPath);
 			input = fopen(inPath, "r");
 
 			length = strlen(path)+strlen(".txt");
 			char* outputPath = malloc((length)*sizeof(char));	//allocates space for full path name
 			sprintf(outputPath, "%s.txt",path);		//creates string for full path
-			printf("outputPath: %s\n",outputPath);
 			output = fopen(outputPath, "w");
 
       if(output==NULL){
@@ -91,25 +87,16 @@ char* votesReadWrite(char* path){
 
 			while(getline(&temp, &length2, input)!= -1){
         temp = trimwhitespace(temp);
-        printf("readline: %s\n",temp);
         for(i=0; i<MAX_CANDIDADTES; i++){
-          printf("i=%d candidate=%s\n", i, candidateNames[i]);
-          printf("i=%d\n", i);
           if(candidateVotes[i]>0 && strcmp(candidateNames[i],temp)==0){//if they have the same name
-            printf("Existing Candidate\n");
             candidateVotes[i]++;//add a vote to that candidate
-            printf("Vote for %s at %d\n", candidateNames[i], i);
             break;
           }
           else if(candidateVotes[i]==0){//if we find an empty index in array then we have a new candidate
-            printf("New Candidate\n");
             candidateVotes[i]++;
-            candidateNames[i]=temp;
-            printf("New Candidate: %s at %d, %d votes\n",candidateNames[i], i, candidateVotes[i]);
+            strcpy(candidateNames[i],temp);
             break;
           }
-
-          printf("\n\n");
         }
 			}
 
@@ -118,7 +105,7 @@ char* votesReadWrite(char* path){
       i=0;
       while(candidateVotes[i]>0){
         if(i>0){
-          sprintf(outputString, ",%s%s:%d",outputString, candidateNames[i], candidateVotes[i]);
+          sprintf(outputString, "%s,%s:%d",outputString, candidateNames[i], candidateVotes[i]);
         }
         else{
           sprintf(outputString, "%s%s:%d",outputString, candidateNames[i], candidateVotes[i]);
@@ -126,15 +113,12 @@ char* votesReadWrite(char* path){
         i++;
       }
       sprintf(outputString, "%s\n", outputString);
-      printf("Testing: %s", outputString);
       fputs(outputString, output);
-      char* returnString = outputString;
 			fclose(output);
 			fclose(input);
 			free(inPath);
-			free(outputPath);
       free(outputString);
-      return returnString;
+      return outputPath;
 		}
 	}
 	return;
@@ -148,8 +132,9 @@ int main(int argc, char** argv){
   }
 
   if(votesFileCheck(argv[1])){//determines if votes.txt exists in the directory
-    // printf("Found Votes.txt\n");
-    char* filename=votesReadWrite(argv[1]);
+    char* filename = votesReadWrite(argv[1]);
+    printf("%s\n",filename);
+    free(filename);
   }
   else{
     printf("Not a leaf node.\n");
