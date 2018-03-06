@@ -57,7 +57,6 @@ void aggregateVotes(char* path){
   int i;
   for(i=0; i<MAX_CANDIDATES; i++){
     candidateVotes[i] = 0;
-    // candidateNames[i] = malloc(1024);
   }
   char* subresultsfile, newresultsfile;
 
@@ -77,12 +76,12 @@ void aggregateVotes(char* path){
           char* newpath = malloc(strlen(path)+strlen(subdir->d_name)+10);
           sprintf(newpath, "%s%s", path, subdir->d_name);
           if(isLeaf(newpath)){
-            printf("newpath: %s\n", newpath);
+            printf("new leaf path: %s\n", newpath);
             execl("./Leaf_Counter", "Leaf_Counter", newpath, (char*)NULL);
             perror("Exec Leaf_Counter failed.\n");
           }
           else {
-            printf("newpath: %s\n", newpath);
+            printf("new path: %s\n", newpath);
             execl("./Aggregate_Votes", "Aggregate_Votes", newpath, (char*)NULL);
             perror("Exec Aggregate_Votes failed.\n");
           }
@@ -160,10 +159,8 @@ int main(int argc, char** argv)
 
   if(isLeaf(argv[1])){
     printf("isLeaf\n");
-    char* votespath = malloc(strlen(argv[1])+12);
-    sprintf(votespath, "%svotes.txt", path);
-    printf("execing:\n./Leaf_Counter %s\n", votespath);
-    execl("./Leaf_Counter", "Leaf_Counter", votespath, (char*)NULL);
+    printf("execing:\n./Leaf_Counter %s\n", path);
+    execl("./Leaf_Counter", "Leaf_Counter", path, (char*)NULL);
     perror("Exec failed.\n");
   }
   else {
