@@ -89,37 +89,42 @@ void aggregateVotes(char* path){
         }
         else if(pid>0) {
           waitpid(pid,0,0);
-          sprintf(subresultsfile, "%s%s.txt", path, subdir->d_name);
-          path[strlen(path)-1] = 0;
+          sprintf(subresultsfile, "%s/%s.txt", path, subdir->d_name);
+          // path[strlen(path)-1] = 0;
           sprintf(newresultsfile, "%s.txt", path);
           FILE* subresults = fopen(subresultsfile, "r");
           if(subresults == NULL){
             printf("error opening file %s\n", subresultsfile);
             exit(0);
           }
-          char* line;
+          char* line = malloc(1024);
           size_t len = 0;
-          while(getline(&line, &len, subresults)!= -1){
-            trimwhitespace(line);
-            char** candidateArray;
-            int n = makeargv(line, ",", &candidateArray);
-            if(numberOfCandidates == 0)
-              numberOfCandidates = n;
-            int j,k;
-            for(j=0; j<n; j++){
-              char** temp;
-              makeargv(candidateArray[k], ":", &temp);
-              printf("temp[0]: %s, temp[1]: %s", temp[0], temp[1]);
-              for(k=0; k<MAX_CANDIDATES; k++){
-                if(candidateVotes[k]>0 && strcmp(candidateNames[k],temp[0])==0){ //if they have the same name
-                  candidateVotes[k] += atoi(temp[1]); //add a vote to that candidate
-                  break;
-                }
-                else if(candidateVotes[k]==0){//if we find an empty index in array then we have a new candidate
-                  candidateVotes[k] += atoi(temp[1]);
-                  strcpy(candidateNames[k],temp[0]);
-                  break;
-                }
+          getline(&line, &len, subresults);
+          printf("line: %s\n", line);
+          trimwhitespace(line);
+          char** candidateArray;
+          int n = makeargv(line, ",", &candidateArray);
+          if(numberOfCandidates == 0)
+            numberOfCandidates = n;
+          int j,k;
+          for(j=0; j<n; j++){
+            char** temp;
+            makeargv(candidateArray[j], ":", &temp);
+            printf("temp[0]: %s, temp[1]: %s\n", temp[0], temp[1]);
+            for(k=0; k<MAX_CANDIDATES; k++){
+              // printf("k is: %d\n", k);
+              candidateNames[k] = malloc(1024);
+              if(candidateVotes[k]>0 && strcmp(candidateNames[k],temp[0])==0){ //if they have the same name
+                candidateVotes[k] += atoi(temp[1]); //add votes to that candidate
+                break;
+              }
+              else if(candidateVotes[k]==0){//if we find an empty index in array then we have a new candidate
+                // printf("candidate: %s, newvotes: %s, int votes: %d\n", temp[0], temp[1], atoi(temp[1]));
+                candidateVotes[k] += atoi(temp[1]);
+                // printf("t1\n");
+                strcpy(candidateNames[k],temp[0]);
+                // printf("t2\n");
+                break;
               }
             }
           }
@@ -155,21 +160,21 @@ int main(int argc, char** argv)
     return -1;
   }
 
-  // char* path = malloc(strlen(argv[1])+12);
-  // int len = strlen(argv[1]);
-  // // printf("last char of argv[1]: %c\n", argv[1][len-1]);
-  // if(argv[1][len-1] != '/'){
-  //   sprintf(path, "%s/", argv[1]);
-  // }
-
+  char* path = malloc(strlen(argv[1])+12);
+  int len = strlen(argv[1]);
+  // printf("last char of argv[1]: %c\n", argv[1][len-1]);
+  strcpy(path, argv[1]);
+  if(argv[1][len-1] == '/'){
+    path[len-1] = 0;
+  }
   if(isLeaf(argv[1])){
     printf("isLeaf\n");
-    printf("execing:\n./Leaf_Counter %s\n", argv[1]);
-    execl("./Leaf_Counter", "Leaf_Counter", argv[1], (char*)NULL);
+    printf("execing:\n./Leaf_Counter %s\n", path);
+    execl("./Leaf_Counter", "Leaf_Counter", path, (char*)NULL);
     perror("Exec failed.\n");
   }
   else {
-    aggregateVotes(argv[1]);
+    aggregateVotes(path);
 
   }
   return 0;
