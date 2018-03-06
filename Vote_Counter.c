@@ -12,6 +12,34 @@
 #include <time.h>
 #include "makeargv.h"
 
+/************************************************************************
+Function: parseWinner
+Description: Function takes string of vote data and parses the string to
+            it parses this string to determine the candidate name of the
+            winner.
+            input: "A:3,B:1,C:1,D:1,E:4"
+            output: "E"
+
+returns the character string of the winner's candidate name
+************************************************************************/
+char* parseWinner(char* string){
+  int max =0;
+  char* winnerName = (char*)malloc(1024*sizeof(char));
+  int voteCount;
+  char** arguments;
+  char** cnv;
+  int number = makeargv(string, ",", &arguments);
+  int i;
+  for(i=0; i<number; i++){
+    makeargv(arguments[0], ":", &cnv);
+    voteCount = atoi(cnv[1]);
+    if(voteCount>max){
+      max = voteCount;
+      strcpy(winnerName, cnv[0]);
+    }
+  }
+  return winnerName;
+}
 
 /************************************************************************
 Function: executeCount
@@ -39,34 +67,45 @@ char* executeCount(char* path){
   }
   else if(pid>0){//parent node
     wait(NULL);
-    char* outputFile = malloc(1024*sizeof(char));
-    sprintf(outputFile,"%s.txt",path);//THIS DOESN'T WORK QUITE RIGHT. IF PATH IS /Documents/Who_Won, THEN OUTPUTFILE WILL BE /Documents/Who_Won.txt
+    char* votesFile = malloc(1024*sizeof(char));
+    sprintf(votesFile,"%s.txt",path);//THIS DOESN'T WORK QUITE RIGHT. IF PATH IS /Documents/Who_Won, THEN OUTPUTFILE WILL BE /Documents/Who_Won.txt
     DIR* direntStream = opendir(path);
     struct dirent* thisDir;
+    FILE *read, *write;
+
     while(1)
     {
       thisDir = readdir(direntStream);
       if(thisDir==NULL){ //end of directory
         break;
       }
-      else if(thisDir->d_type == DT_REG && strcmp(thisDir->d_name, outputFile)==0){//if a file is a regular flie and matches output.txt
+      else if(thisDir->d_type == DT_REG && strcmp(thisDir->d_name, votesFile)==0){//if a file is a regular flie and matches output.txt
         //read file to determine who Who_Won
         int length = strlen(path)+strlen(thisDir->d_name);
   			char* inPath = malloc((length+10)*sizeof(char));	//allocates space for full path name
   			sprintf(inPath, "%s/%s",path,thisDir->d_name);		//creates string for full path
-  			input = fopen(inPath, "r");
+  			read = fopen(inPath, "r");
 
         char* temp = malloc(MAX_CANDIDADTES*1024*sizeof(char));
   			size_t length2;
-  			getline(&temp, &length2, input);
+  			getline(&temp, &length2, read);
 
         char* winner = parseWinner(temp); //parseWinner function will take data string and return the string containing the winner's candidateName
+        free(temp);
+        fclose(read);
+        write = fopen(inPath, "a");
+        char* outputString = (char*)malloc(sizeof(char)*(strlen(winner)+10));
+        sprintf(outputString, "Winner: %s\n", winner);
+        free(winner);
+        fputs(outputString, write);
+        fclose(write);
+        free (outputString);
+        free(votesFile);
 
-
-        //write to output file
+        return inPath;
       }
     }
-    return 0;
+    return;
   }
   else{
     perror("ERROR FORKING:\n");
@@ -85,9 +124,13 @@ int main(int argc, char** argv){
 
   if(argc == 2){
     char* filename = executeCount(argv[1]);
+    printf("%s\n", filename);
+    free(filename);
   }
   else{
     char* filename = executeCount("");//CONFUSED ABOUT HOW 0 ARGUMENTS IS SUPPOSED TO WORK
+    printf("%s\n", filename);
+    free(filename);
   }
 
   return 0;
