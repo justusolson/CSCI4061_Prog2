@@ -1,3 +1,5 @@
+#define NUM_ARGS 1
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -52,14 +54,28 @@ void aggregateVotes(char* path){
   }
 
   DIR* curdir = opendir(path);
-  struct dirent* thisdir;
+  struct dirent* subdir;
 
-  // curdir = opendir(path);
   while(1){
-    thisdir = readdir(curdir);
-    if(strcmp(thisdir->d_name, ".")!=0 && strcmp(thisdir->d_name, "..")!=0){
-      if(strcmp(thisdir->d_name, "votes.txt")==0){
+    subdir = readdir(curdir);
+    if(subdir == NULL){
+      break;
+    }
 
+    if(strcmp(subdir->d_name, ".")!=0 && strcmp(subdir->d_name, "..")!=0){
+      if(subdir->d_type == DT_DIR){
+        pid_t pid = fork();
+        if(pid == 0){
+          char* newpath = malloc(strlen(path)+strlen(subdir->d_name)+10);
+          sprintf(newpath, "%s%s/", path, subdir->d_name);
+          execl("./Aggregate_Votes", "Aggregate_Votes", newpath, (char*)NULL);
+          perror("Exec failed.\n");
+        }
+        else {
+          wait(NULL);
+          
+
+        }
       }
     }
   }
@@ -67,28 +83,29 @@ void aggregateVotes(char* path){
 
 int main(int argc, char** argv)
 {
-  if(argc < 2){
-    printf("Incorrect number of arguments, expected 1 given %d.\n", argc-1);
+  if(argc < NUM_ARGS+1){
+    printf("Incorrect number of arguments, expected %d given %d.\n", NUM_ARGS, argc-1);
     return -1;
   }
+
+  char* path = malloc(strlen(argv[1])+12);
+  int len = strlen(argv[1]);
+  // printf("last char of argv[1]: %c\n", argv[1][len-1]);
+  if(argv[1][len-1] != '/'){
+    sprintf(path, "%s/", argv[1]);
+  }
+
   if(isLeaf(argv[1])){
     printf("isLeaf\n");
     char* votespath = malloc(strlen(argv[1])+12);
-    int len = strlen(argv[1]);
-    // printf("last char of argv[1]: %c\n", argv[1][len-1]);
-    if(argv[1][len-1] == '/'){
-      sprintf(votespath, "%svotes.txt", argv[1]);
-    }
-    else {
-      sprintf(votespath, "%s/votes.txt", argv[1]);
-    }
+    sprintf(votespath, "%svotes.txt", path);
     printf("execing:\n./Leaf_Counter %s\n", votespath);
     execl("./Leaf_Counter", "Leaf_Counter", votespath, (char*)NULL);
     perror("Exec failed.\n");
   }
   else {
-    aggregateVotes(argv[1]);
-  }
+    aggregateVotes(path);
 
+  }
   return 0;
 }
