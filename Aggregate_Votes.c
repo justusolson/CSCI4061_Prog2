@@ -53,12 +53,13 @@ output: Aggregation results in "<path>.txt" files and writes the output
 void aggregateVotes(char* path){
   int candidateVotes[MAX_CANDIDATES];
   int numberOfCandidates = 0;
-  char* candidateNames[MAX_CANDIDATES][2];
+  char* candidateNames[MAX_CANDIDATES];
   int i;
   for(i=0; i<MAX_CANDIDATES; i++){
     candidateVotes[i] = 0;
   }
-  char* subresultsfile, newresultsfile;
+  char* subresultsfile = malloc(1024);
+  char* newresultsfile = malloc(1024);
 
   DIR* curdir = opendir(path);
   struct dirent* subdir;
@@ -74,7 +75,7 @@ void aggregateVotes(char* path){
         pid_t pid = fork();
         if(pid == 0){
           char* newpath = malloc(strlen(path)+strlen(subdir->d_name)+10);
-          sprintf(newpath, "%s%s", path, subdir->d_name);
+          sprintf(newpath, "%s/%s", path, subdir->d_name);
           if(isLeaf(newpath)){
             printf("new leaf path: %s\n", newpath);
             execl("./Leaf_Counter", "Leaf_Counter", newpath, (char*)NULL);
@@ -86,8 +87,8 @@ void aggregateVotes(char* path){
             perror("Exec Aggregate_Votes failed.\n");
           }
         }
-        else {
-          wait(NULL);
+        else if(pid>0) {
+          waitpid(pid,0,0);
           sprintf(subresultsfile, "%s%s.txt", path, subdir->d_name);
           path[strlen(path)-1] = 0;
           sprintf(newresultsfile, "%s.txt", path);
@@ -101,13 +102,13 @@ void aggregateVotes(char* path){
           while(getline(&line, &len, subresults)!= -1){
             trimwhitespace(line);
             char** candidateArray;
-            int n = makeargv(line, ",", candidateArray);
+            int n = makeargv(line, ",", &candidateArray);
             if(numberOfCandidates == 0)
               numberOfCandidates = n;
             int j,k;
             for(j=0; j<n; j++){
               char** temp;
-              makeargv(candidateArray[k], ":", temp);
+              makeargv(candidateArray[k], ":", &temp);
               printf("temp[0]: %s, temp[1]: %s", temp[0], temp[1]);
               for(k=0; k<MAX_CANDIDATES; k++){
                 if(candidateVotes[k]>0 && strcmp(candidateNames[k],temp[0])==0){ //if they have the same name
@@ -124,6 +125,10 @@ void aggregateVotes(char* path){
           }
           if(line)
             free(line);
+        }
+        else{
+          perror("Fork Failed\n");
+          exit(0);
         }
       }
     }
@@ -150,21 +155,21 @@ int main(int argc, char** argv)
     return -1;
   }
 
-  char* path = malloc(strlen(argv[1])+12);
-  int len = strlen(argv[1]);
-  // printf("last char of argv[1]: %c\n", argv[1][len-1]);
-  if(argv[1][len-1] != '/'){
-    sprintf(path, "%s/", argv[1]);
-  }
+  // char* path = malloc(strlen(argv[1])+12);
+  // int len = strlen(argv[1]);
+  // // printf("last char of argv[1]: %c\n", argv[1][len-1]);
+  // if(argv[1][len-1] != '/'){
+  //   sprintf(path, "%s/", argv[1]);
+  // }
 
   if(isLeaf(argv[1])){
     printf("isLeaf\n");
-    printf("execing:\n./Leaf_Counter %s\n", path);
-    execl("./Leaf_Counter", "Leaf_Counter", path, (char*)NULL);
+    printf("execing:\n./Leaf_Counter %s\n", argv[1]);
+    execl("./Leaf_Counter", "Leaf_Counter", argv[1], (char*)NULL);
     perror("Exec failed.\n");
   }
   else {
-    aggregateVotes(path);
+    aggregateVotes(argv[1]);
 
   }
   return 0;
