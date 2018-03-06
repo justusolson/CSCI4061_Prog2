@@ -130,14 +130,20 @@ int main(int argc, char** argv){
     printf("Wrong number of args to leafcounter, expected %d, given %d\n", NUM_ARGS, argc - 1);
 		exit(1);
   }
-
-  if(votesFileCheck(argv[1])){//determines if votes.txt exists in the directory
-    char* filename = votesReadWrite(argv[1]);
+  int len = strlen(argv[1]);
+  char* path = malloc(len*sizeof(char));
+  strcpy(path, argv[1]);
+  if(path[len-1] == '/'){
+    path[len-1]='\0';
+  }
+  if(votesFileCheck(path)){//determines if votes.txt exists in the directory
+    char* filename = votesReadWrite(path);
     printf("%s\n",filename);
     free(filename);
   }
   else{
     printf("Not a leaf node.\n");
   }
+  free(path);
   return 0;
 }
