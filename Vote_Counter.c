@@ -68,7 +68,12 @@ char* executeCount(char* path){
   else if(pid>0){//parent node
     wait(NULL);
     char* votesFile = malloc(1024*sizeof(char));
-    sprintf(votesFile,"%s.txt",path);//THIS DOESN'T WORK QUITE RIGHT. IF PATH IS /Documents/Who_Won, THEN OUTPUTFILE WILL BE /Documents/Who_Won.txt
+    char** args;
+    int n = makeargv(path, "/", &args);
+    sprintf(votesFile,"%s/%s.txt",path, args[n-1]);//THIS DOESN'T WORK QUITE RIGHT. IF PATH IS /Documents/Who_Won, THEN OUTPUTFILE WILL BE /Documents/Who_Won.txt
+    printf("votesfile: %s\n", votesFile);
+    free(*args);
+    free(args);
     DIR* direntStream = opendir(path);
     struct dirent* thisDir;
     FILE *read, *write;
@@ -76,11 +81,14 @@ char* executeCount(char* path){
     while(1)
     {
       thisDir = readdir(direntStream);
+      printf("hello %s\n", thisDir->d_name);
       if(thisDir==NULL){ //end of directory
         break;
       }
       else if(thisDir->d_type == DT_REG && strcmp(thisDir->d_name, votesFile)==0){//if a file is a regular flie and matches output.txt
         //read file to determine who Who_Won
+        printf("hello from else if\n");
+
         int length = strlen(path)+strlen(thisDir->d_name);
   			char* inPath = malloc((length+10)*sizeof(char));	//allocates space for full path name
   			sprintf(inPath, "%s/%s",path,thisDir->d_name);		//creates string for full path
@@ -117,18 +125,16 @@ char* executeCount(char* path){
 
 
 int main(int argc, char** argv){
-  if(argc > 2 || argc < 1){ //checks for proper number of arguments
-    printf("Wrong number of args to Vote_Counter, expected at most 1, given %d\n", argc - 1);
+  if(argc != 2){ //checks for proper number of arguments
+    printf("Wrong number of args to Vote_Counter, expected 1, given %d\n", argc - 1);
 		exit(1);
   }
-
-  if(argc == 2){
+  else {
+    int len = strlen(argv[1]);
+    if(argv[1][len-1] == '/'){
+      argv[1][len-1] = 0;
+    }
     char* filename = executeCount(argv[1]);
-    printf("%s\n", filename);
-    free(filename);
-  }
-  else{
-    char* filename = executeCount("");//CONFUSED ABOUT HOW 0 ARGUMENTS IS SUPPOSED TO WORK
     printf("%s\n", filename);
     free(filename);
   }

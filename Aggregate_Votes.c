@@ -24,6 +24,10 @@ output: 1 if is a leaf, 0 if not a leaf
 ************************************************************************/
 int isLeaf(char* path){
   DIR* curdir = opendir(path);
+  if(curdir == NULL){
+    printf("Failed to open path.\n");
+    exit(0);
+  }
   struct dirent* thisdir;
   int leaf = 1;
   while(1){
@@ -45,7 +49,8 @@ int isLeaf(char* path){
 Function: aggregateVotes
 Description: function recurses through directories forking and execing
   Leaf_Counter on leaves and Aggregate_Votes on non-leaves. Ignores
-  votes.txt files in non-leaves.
+  votes.txt files in non-leaves. Child processes print to a txt file
+  rather than writing to stdout.
 input: Path to directory
 output: Aggregation results in "<path>.txt" files and writes the output
   file path to stdout
@@ -59,55 +64,72 @@ void aggregateVotes(char* path){
     candidateVotes[i] = 0;
     candidateNames[i] = malloc(1024);
   }
-  char* subresultsfile = malloc(1024);
-  char* newresultsfile = malloc(1024);
+  char* subresultsfile = malloc(1024); //subdirectory <path>.txt file to read from
+  char* newresultsfile = malloc(1024); //new <path>.txt file to write to
 
-  DIR* curdir = opendir(path);
-  struct dirent* subdir;
+  DIR* curdir = opendir(path); //parent dir that aggregateVotes is called on
+  if(curdir == NULL){
+    printf("Failed to open path\n");
+    exit(0);
+  }
+  struct dirent* subdir;  //each subdirectory or txt file
 
   while(1){
     subdir = readdir(curdir);
-    if(subdir == NULL){
+    if(subdir == NULL){ //reached the end of the directory
       break;
     }
 
-    if(strcmp(subdir->d_name, ".")!=0 && strcmp(subdir->d_name, "..")!=0){
-      if(subdir->d_type == DT_DIR){
+    if(strcmp(subdir->d_name, ".")!=0 && strcmp(subdir->d_name, "..")!=0){ //ignore current and parent directories
+      if(subdir->d_type == DT_DIR){ // for each subdirectory we exec either Aggregate_Votes or Leaf_Counter
         pid_t pid = fork();
-        if(pid == 0){
-          char* newpath = malloc(strlen(path)+strlen(subdir->d_name)+10);
-          sprintf(newpath, "%s/%s", path, subdir->d_name);
-          int fd = open("trash.txt", O_CREAT|O_WRONLY);
+        if(pid == 0){ // child process
+          // char* newpath = malloc(strlen(path)+strlen(subdir->d_name)+10);
+          sprintf(path, "%s/%s", path, subdir->d_name); //append subdirectory name to the path
+          int fd = open("trash.txt", O_CREAT|O_WRONLY); //new txt file for child process to print to
+          fchmod(fd, 0700);
           lseek(fd, 0, SEEK_END);
           dup2(fd, STDOUT_FILENO);
-          if(isLeaf(newpath)){
-            // printf("new leaf path: %s\n", newpath);
-            execl("./Leaf_Counter", "Leaf_Counter", newpath, (char*)NULL);
+          if(isLeaf(path)){
+            printf("new leaf path: %s\n", path);
+            execl("./Leaf_Counter", "Leaf_Counter", path, (char*)NULL);
             perror("Exec Leaf_Counter failed.\n");
           }
           else {
-            // printf("new path: %s\n", newpath);
-            execl("./Aggregate_Votes", "Aggregate_Votes", newpath, (char*)NULL);
+            printf("new path: %s\n", path);
+            execl("./Aggregate_Votes", "Aggregate_Votes", path, (char*)NULL);
             perror("Exec Aggregate_Votes failed.\n");
           }
         }
         else if(pid>0) {
           waitpid(pid,0,0);
-          sprintf(subresultsfile, "%s/%s.txt", path, subdir->d_name);
-          sprintf(newresultsfile, "%s.txt", path);
+          sprintf(subresultsfile, "%s/%s/%s.txt", path, subdir->d_name, subdir->d_name);
+          printf("subresultsfile: %s\n", subresultsfile);
+          char** args;
+          int q = makeargv(path, "/", &args);
+          sprintf(newresultsfile, "%s/%s.txt", path, args[q-1]);
+          free(*args);
+          free(args);
+          printf("newresultsfile: %s\n", newresultsfile);
           FILE* subresults = fopen(subresultsfile, "r");
           if(subresults == NULL){
             printf("error opening file %s\n", subresultsfile);
             exit(0);
           }
+          free(subresultsfile);
           char* line = malloc(1024);
           size_t len = 0;
           getline(&line, &len, subresults);
           // printf("line: %s\n", line);
           trimwhitespace(line);
           char** candidateArray;
+          // int p;
+          // for(p=0; p<MAX_CANDIDATES; p++){
+          //   candidateArray[p] = (char*)malloc(1024);
+          // }
           int n = makeargv(line, ",", &candidateArray);
           free(line);
+          fclose(subresults);
           if(numberOfCandidates == 0){
             numberOfCandidates = n;
             // printf("numCand: %d\n", n);
@@ -115,6 +137,8 @@ void aggregateVotes(char* path){
           int j,k;
           for(j=0; j<n; j++){
             char** temp;
+            // temp[0] = (char*)malloc(1024);
+            // temp[1] = (char*)malloc(128);
             makeargv(candidateArray[j], ":", &temp);
             // printf("temp[0]: %s, temp[1]: %s\n", temp[0], temp[1]);
             for(k=0; k<MAX_CANDIDATES; k++){
@@ -129,6 +153,10 @@ void aggregateVotes(char* path){
                 break;
               }
             }
+            free(*temp);
+            free(temp);
+            free(*candidateArray);
+            free(candidateArray);
           }
         }
         else{
@@ -152,8 +180,14 @@ void aggregateVotes(char* path){
   }
   // printf("adding candidate %s with %d votes\n", candidateNames[l], candidateVotes[l]);
   sprintf(output, "%s%s:%d\n", output, candidateNames[numberOfCandidates-1], candidateVotes[numberOfCandidates-1]);
+  int m;
+  for(m=0; m<numberOfCandidates; m++){
+    free(candidateNames[m]);
+  }
   fputs(output, newresults);
   printf("%s\n", newresultsfile);
+  free(newresultsfile);
+  fclose(newresults);
 }
 
 int main(int argc, char** argv)
@@ -163,21 +197,17 @@ int main(int argc, char** argv)
     return -1;
   }
 
-  char* path = malloc(strlen(argv[1])+12);
   int len = strlen(argv[1]);
-  // printf("last char of argv[1]: %c\n", argv[1][len-1]);
-  strcpy(path, argv[1]);
   if(argv[1][len-1] == '/'){
-    path[len-1] = 0;
+    argv[1][len-1] = 0;
   }
   if(isLeaf(argv[1])){
     // printf("execing:\n./Leaf_Counter %s\n", path);
-    execl("./Leaf_Counter", "Leaf_Counter", path, (char*)NULL);
+    execl("./Leaf_Counter", "Leaf_Counter", argv[1], (char*)NULL);
     perror("Exec failed.\n");
   }
   else {
-    aggregateVotes(path);
-
+    aggregateVotes(argv[1]);
   }
   return 0;
 }
