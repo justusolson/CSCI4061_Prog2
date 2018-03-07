@@ -11,3 +11,4 @@ Vote_Counter: Vote_Counter.c
 
 clean: 
 	rm Leaf_Counter Aggregate_Votes Vote_Counter
+	rm trash.txt
