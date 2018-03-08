@@ -72,10 +72,12 @@ char* votesReadWrite(char* path){
 			char* inPath = malloc((length+10)*sizeof(char));	//allocates space for full path name
 			sprintf(inPath, "%s/%s",path,thisDir->d_name);		//creates string for full path
 			input = fopen(inPath, "r");
+
       char** args;
       int n = makeargv(path, "/", &args);
 			length = strlen(path)+strlen(args[n-1])+strlen(".txt");
-			char* outputPath = malloc((length)*sizeof(char));	//allocates space for full path name
+
+			char* outputPath = malloc((length+10)*sizeof(char));	//allocates space for full path name
 			sprintf(outputPath, "%s/%s.txt",path,args[n-1]);		//creates string for full path
 			output = fopen(outputPath, "w");
       free(*args);
