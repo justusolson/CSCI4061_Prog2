@@ -37,6 +37,8 @@ char* parseWinner(char* string){
       max = voteCount;
       strcpy(winnerName, cnv[0]);
     }
+    free(cnv);
+    free(*cnv);
   }
   return winnerName;
 }
@@ -70,7 +72,7 @@ char* executeCount(char* path){
     char* votesFile = malloc(1024*sizeof(char));
     char** args;
     int n = makeargv(path, "/", &args);
-    sprintf(votesFile,"%s/%s.txt",path, args[n-1]);//THIS DOESN'T WORK QUITE RIGHT. IF PATH IS /Documents/Who_Won, THEN OUTPUTFILE WILL BE /Documents/Who_Won.txt
+    sprintf(votesFile,"%s.txt", args[n-1]);//THIS DOESN'T WORK QUITE RIGHT. IF PATH IS /Documents/Who_Won, THEN OUTPUTFILE WILL BE /Documents/Who_Won.txt
     printf("votesfile: %s\n", votesFile);
     free(*args);
     free(args);
@@ -102,8 +104,9 @@ char* executeCount(char* path){
         free(temp);
         fclose(read);
         write = fopen(inPath, "a");
+        printf("Winner %s\n", winner);
         char* outputString = (char*)malloc(sizeof(char)*(strlen(winner)+10));
-        sprintf(outputString, "Winner: %s\n", winner);
+        sprintf(outputString, "\nWinner: %s\n", winner);
         free(winner);
         fputs(outputString, write);
         fclose(write);
