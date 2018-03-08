@@ -41,6 +41,7 @@ int isLeaf(char* path){
       }
     }
   }
+  free(curdir);
   if(leaf) return 1;
   else return 0;
 }
@@ -91,12 +92,12 @@ void aggregateVotes(char* path){
           lseek(fd, 0, SEEK_END);
           dup2(fd, STDOUT_FILENO);
           if(isLeaf(path)){
-            printf("new leaf path: %s\n", path);
+            // printf("new leaf path: %s\n", path);
             execl("./Leaf_Counter", "Leaf_Counter", path, (char*)NULL);
             perror("Exec Leaf_Counter failed.\n");
           }
           else {
-            printf("new path: %s\n", path);
+            // printf("new path: %s\n", path);
             execl("./Aggregate_Votes", "Aggregate_Votes", path, (char*)NULL);
             perror("Exec Aggregate_Votes failed.\n");
           }
@@ -104,7 +105,7 @@ void aggregateVotes(char* path){
         else if(pid>0) {
           waitpid(pid,0,0);
           sprintf(subresultsfile, "%s/%s/%s.txt", path, subdir->d_name, subdir->d_name);
-          printf("subresultsfile: %s\n", subresultsfile);
+          // printf("subresultsfile: %s\n", subresultsfile);
           FILE* subresults = fopen(subresultsfile, "r");
           if(subresults == NULL){
             printf("error opening file %s\n", subresultsfile);
@@ -115,7 +116,6 @@ void aggregateVotes(char* path){
           size_t len = 0;
           getline(&line, &len, subresults);
           // printf("line: %s\n", line);
-          printf("line: %s\n", line);
           trimwhitespace(line);
           char** candidateArray;
           // int p;
@@ -166,7 +166,7 @@ void aggregateVotes(char* path){
   sprintf(newresultsfile, "%s/%s.txt", path, args[q-1]);
   free(*args);
   free(args);
-  printf("newresultsfile: %s\n", newresultsfile);
+  // printf("newresultsfile: %s\n", newresultsfile);
   // print to output file
   FILE* newresults = fopen(newresultsfile, "w");
   if(newresults == NULL){
@@ -184,11 +184,12 @@ void aggregateVotes(char* path){
     }
     l++;
   }
+  sprintf(output, "%s\n", output);
   int m;
   for(m=0; m<numberOfCandidates; m++){
     free(candidateNames[m]);
   }
-  printf("output string: %s\n", output);
+  // printf("output string: %s\n", output);
   fputs(output, newresults);
   printf("%s\n", newresultsfile);
   free(newresultsfile);

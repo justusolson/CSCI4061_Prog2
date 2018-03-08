@@ -31,15 +31,18 @@ char* parseWinner(char* string){
   int number = makeargv(string, ",", &arguments);
   int i;
   for(i=0; i<number; i++){
-    makeargv(arguments[0], ":", &cnv);
+    makeargv(arguments[i], ":", &cnv);
     voteCount = atoi(cnv[1]);
+    // printf("cand: %s, votes: %d\n", cnv[0], voteCount);
     if(voteCount>max){
       max = voteCount;
       strcpy(winnerName, cnv[0]);
     }
-    free(cnv);
     free(*cnv);
+    free(cnv);
   }
+  free(*arguments);
+  free(arguments);
   return winnerName;
 }
 
@@ -73,7 +76,7 @@ char* executeCount(char* path){
     char** args;
     int n = makeargv(path, "/", &args);
     sprintf(votesFile,"%s.txt", args[n-1]);//THIS DOESN'T WORK QUITE RIGHT. IF PATH IS /Documents/Who_Won, THEN OUTPUTFILE WILL BE /Documents/Who_Won.txt
-    printf("votesfile: %s\n", votesFile);
+    // printf("votesfile: %s\n", votesFile);
     free(*args);
     free(args);
     DIR* direntStream = opendir(path);
@@ -83,14 +86,11 @@ char* executeCount(char* path){
     while(1)
     {
       thisDir = readdir(direntStream);
-      printf("hello %s\n", thisDir->d_name);
       if(thisDir==NULL){ //end of directory
         break;
       }
       else if(thisDir->d_type == DT_REG && strcmp(thisDir->d_name, votesFile)==0){//if a file is a regular flie and matches output.txt
         //read file to determine who Who_Won
-        printf("hello from else if\n");
-
         int length = strlen(path)+strlen(thisDir->d_name);
   			char* inPath = malloc((length+10)*sizeof(char));	//allocates space for full path name
   			sprintf(inPath, "%s/%s",path,thisDir->d_name);		//creates string for full path
@@ -99,14 +99,13 @@ char* executeCount(char* path){
         char* temp = malloc(MAX_CANDIDADTES*1024*sizeof(char));
   			size_t length2;
   			getline(&temp, &length2, read);
-
         char* winner = parseWinner(temp); //parseWinner function will take data string and return the string containing the winner's candidateName
         free(temp);
         fclose(read);
         write = fopen(inPath, "a");
         printf("Winner %s\n", winner);
         char* outputString = (char*)malloc(sizeof(char)*(strlen(winner)+10));
-        sprintf(outputString, "\nWinner: %s\n", winner);
+        sprintf(outputString, "Winner:%s\n", winner);
         free(winner);
         fputs(outputString, write);
         fclose(write);
@@ -137,9 +136,8 @@ int main(int argc, char** argv){
     if(argv[1][len-1] == '/'){
       argv[1][len-1] = 0;
     }
-    char* filename = executeCount(argv[1]);
-    printf("%s\n", filename);
-    free(filename);
+    executeCount(argv[1]);
+    remove("trash.txt");
   }
 
   return 0;
