@@ -105,12 +105,6 @@ void aggregateVotes(char* path){
           waitpid(pid,0,0);
           sprintf(subresultsfile, "%s/%s/%s.txt", path, subdir->d_name, subdir->d_name);
           printf("subresultsfile: %s\n", subresultsfile);
-          char** args;
-          int q = makeargv(path, "/", &args);
-          sprintf(newresultsfile, "%s/%s.txt", path, args[q-1]);
-          free(*args);
-          free(args);
-          printf("newresultsfile: %s\n", newresultsfile);
           FILE* subresults = fopen(subresultsfile, "r");
           if(subresults == NULL){
             printf("error opening file %s\n", subresultsfile);
@@ -166,6 +160,12 @@ void aggregateVotes(char* path){
       }
     }
   }
+  char** args;
+  int q = makeargv(path, "/", &args);
+  sprintf(newresultsfile, "%s/%s.txt", path, args[q-1]);
+  free(*args);
+  free(args);
+  printf("newresultsfile: %s\n", newresultsfile);
   // print to output file
   FILE* newresults = fopen(newresultsfile, "w");
   if(newresults == NULL){
