@@ -1,5 +1,5 @@
 #define NUM_ARGS 1
-#define MAX_CANDIDADTES 100
+#define MAX_CANDIDATES 100
 #define _GNU_SOURCE
 
 #include <stdio.h>
@@ -55,10 +55,10 @@ char* votesReadWrite(char* path){
   DIR* direntStream = opendir(path);
 	struct dirent* thisDir;
 	FILE *input, *output;
-  char candidateNames[MAX_CANDIDADTES][1024];
-  int candidateVotes[MAX_CANDIDADTES];
+  char candidateNames[MAX_CANDIDATES][1024];
+  int candidateVotes[MAX_CANDIDATES];
   int i;
-  for(i=0; i<MAX_CANDIDADTES; i++){//initialize candidateVotes array to 0
+  for(i=0; i<MAX_CANDIDATES; i++){//initialize candidateVotes array to 0
     candidateVotes[i]=0;
   }
 	while(1)
@@ -92,7 +92,7 @@ char* votesReadWrite(char* path){
 
 			while(getline(&temp, &length2, input)!= -1){
         temp = trimwhitespace(temp);
-        for(i=0; i<MAX_CANDIDADTES; i++){
+        for(i=0; i<MAX_CANDIDATES; i++){
           if(candidateVotes[i]>0 && strcmp(candidateNames[i],temp)==0){//if they have the same name
             candidateVotes[i]++;//add a vote to that candidate
             break;
@@ -106,7 +106,7 @@ char* votesReadWrite(char* path){
 			}
 
       free(temp);
-      char* outputString = malloc(MAX_CANDIDADTES*1024*sizeof(char));
+      char* outputString = malloc(MAX_CANDIDATES*1024*sizeof(char));
       i=0;
       while(candidateVotes[i]>0){
         if(i>0){
