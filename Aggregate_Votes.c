@@ -86,10 +86,10 @@ void aggregateVotes(char* path){
         if(pid == 0){ // child process
           // char* newpath = malloc(strlen(path)+strlen(subdir->d_name)+10);
           sprintf(path, "%s/%s", path, subdir->d_name); //append subdirectory name to the path
-          // int fd = open("trash.txt", O_CREAT|O_WRONLY); //new txt file for child process to print to
-          // fchmod(fd, 0700);
-          // lseek(fd, 0, SEEK_END);
-          // dup2(fd, STDOUT_FILENO);
+          int fd = open("trash.txt", O_CREAT|O_WRONLY); //new txt file for child process to print to
+          fchmod(fd, 0700);
+          lseek(fd, 0, SEEK_END);
+          dup2(fd, STDOUT_FILENO);
           if(isLeaf(path)){
             printf("new leaf path: %s\n", path);
             execl("./Leaf_Counter", "Leaf_Counter", path, (char*)NULL);
