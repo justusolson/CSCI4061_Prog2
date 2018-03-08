@@ -25,19 +25,26 @@ returns 0 if it does not exist
 ************************************************************************/
 int votesFileCheck(char* path){
   DIR* direntStream = opendir(path);
-  struct dirent* thisDir;
-	while(1)
-	{
-		thisDir = readdir(direntStream);
-		if(thisDir==NULL){ //end of directory
-			break;
-		}
-    else if(thisDir->d_type == DT_REG){//if a file is a regular flie
-      if(strcmp(thisDir->d_name, "votes.txt")==0){
-        return 1; //found a file with the name votes.txt
+  struct dirent* thisdir;
+  if(direntStream == NULL){
+    printf("Failed to open path.\n");
+    exit(0);
+  }
+  int leaf = 1;
+  while(1){
+    thisdir = readdir(direntStream);
+    if(thisdir == NULL){
+      break;
+    }
+    if(strcmp(thisdir->d_name, ".")!=0 && strcmp(thisdir->d_name, "..")!=0){
+			if(thisdir->d_type == DT_DIR){
+        leaf = 0;
       }
     }
   }
+  free(direntStream);
+  if(leaf) return 1;
+  else return 0;
   return 0;
 }
 
@@ -82,7 +89,6 @@ char* votesReadWrite(char* path){
 			output = fopen(outputPath, "w");
       free(*args);
       free(args);
-      printf("output: %s\n", outputPath);
       if(output==NULL){
         perror("Error opening file\n");
         return;

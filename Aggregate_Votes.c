@@ -166,8 +166,6 @@ void aggregateVotes(char* path){
   sprintf(newresultsfile, "%s/%s.txt", path, args[q-1]);
   free(*args);
   free(args);
-  // printf("newresultsfile: %s\n", newresultsfile);
-  // print to output file
   FILE* newresults = fopen(newresultsfile, "w");
   if(newresults == NULL){
     printf("error opening file %s\n", newresultsfile);
