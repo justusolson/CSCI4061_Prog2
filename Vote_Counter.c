@@ -33,7 +33,7 @@ char* parseWinner(char* string){
   for(i=0; i<number; i++){
     makeargv(arguments[i], ":", &cnv);
     voteCount = atoi(cnv[1]);
-    
+
     if(voteCount>max){
       max = voteCount;
       strcpy(winnerName, cnv[0]);
@@ -122,7 +122,35 @@ char* executeCount(char* path){
   return;
 }
 
-
+int containsCycle(char* path){
+  char** visited;
+  char** fringe;
+  int cycle = 0;
+  DIR* curdir = malloc(sizeof(DIR*));
+  struct dirent* thisdir = malloc(sizeof(struct dirent*));
+  while(1){
+    curdir = opendir(path);
+    if(curdir == NULL){
+      printf("Failed to open path.\n");
+      break;
+    }
+    while(1){
+      thisdir = readdir(curdir);
+      if(thisdir == NULL){
+        break;
+      }
+      if(strcmp(thisdir->d_name, ".")!=0 && strcmp(thisdir->d_name, "..")!=0){
+  			if(thisdir->d_type == DT_DIR){
+          cycle = 1;
+        }
+      }
+    }
+    //update path to
+  }
+  free(curdir);
+  if(cycle) return 1;
+  else return 0;
+}
 
 int main(int argc, char** argv){
   if(argc != 2){ //checks for proper number of arguments

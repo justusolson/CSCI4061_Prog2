@@ -213,6 +213,7 @@ int main(int argc, char** argv)
   }
   else {
     aggregateVotes(argv[1]);
+    remove("trash.txt");
   }
   return 0;
 }

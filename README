@@ -1,2 +1,19 @@
-# CSCI4061_Prog2
-Programming assignment 2 for CSCI4061 Operating Systems. The program will sum up votes from regions that are subdirectories of parent regions.
+login: slett142, olso7127
+Date: 03/09/18
+Name: Travis Slettvedt, Justus Olson
+Lecture Sections: 1, 1
+
+README for CSCI4061 Programming Assignment 2.
+
+EXECUTING PROGRAM
+The c files can be compiled using "make [file]" with Vote_Counter.c, Aggregate_Votes.c, or Leaf_Counter.c as an optional parameter to compile only that file. The executable files can be removed with "make clean". Any of the programs can be run on a directory, but Vote_Counter is the main driver program. To run each program the format is "./<program> <path>", where path is a path to a directory and it can be with or without a trailing slash "/".
+
+
+DESCRIPTION OF PROGRAM
+This program counts votes of an election between multiple candidates. The votes come in from many regions and subregions which are found in a directory structure of parents and children. The winner of the election is determined by counting the votes in each leaf node, then the parents summing up the vote counts of their children until all children have been accounted for and the winner determined. Vote_Counter calls Aggregate_Votes on the root directory, and Aggregate_Votes is recursively called on each subdirectory. If Aggregate_Votes is called on a leaf directory it calls Leaf_Counter to handle counting votes from the "votes.txt" file. Once the results of all subdirectories are counted, Aggregate_Votes outputs the total votes for each candidate from every child. Once every directory has been aggregated, Vote_Counter analyzes the results to pick the winner as the candidate with the most votes.
+
+CONTRIBUTIONS
+Justus wrote Leaf_Counter.c and Vote_Counter.c.
+Travis wrote Aggregate_Votes.c and README.
+Debugging and error correcting was done by both.
+
