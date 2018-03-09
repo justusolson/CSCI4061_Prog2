@@ -1,3 +1,4 @@
+#define NUM_ARGS 1
 #define MAX_CANDIDADTES 100
 
 #include <stdio.h>
@@ -11,6 +12,10 @@
 #include <string.h>
 #include <time.h>
 #include "makeargv.h"
+
+char* parseWinner(char* string);
+int executeCount(char* path);
+int containsCycle(char* path);
 
 /************************************************************************
 Function: parseWinner
@@ -28,13 +33,13 @@ char* parseWinner(char* string){
   int voteCount;
   char** arguments;
   char** cnv;
-  int number = makeargv(string, ",", &arguments);
+  int number = makeargv(string, ",", &arguments); //split results by comments, each element of arguments contains "candidate:votes"
   int i;
   for(i=0; i<number; i++){
-    makeargv(arguments[i], ":", &cnv);
+    makeargv(arguments[i], ":", &cnv); //split arguments by colon, cnv[0] is name and cnv[1] is number of votes
     voteCount = atoi(cnv[1]);
 
-    if(voteCount>max){
+    if(voteCount>max){ // find name of candidate with max number of votes
       max = voteCount;
       strcpy(winnerName, cnv[0]);
     }
@@ -56,12 +61,12 @@ Description: Function takes a path as an argument. The path is the root
             Ex: path: Who_Won
                 output: Winner:E
 
-returns the character string of the output file path
+returns 1 if succeeded, -1 if failed.
 ************************************************************************/
-char* executeCount(char* path){
-  pid_t pid = fork();		//fork for every child node
+int executeCount(char* path){
+  pid_t pid = fork();		//fork to exec Aggregate_Votes
 
-  if(pid==0){//child node
+  if(pid==0){//child process
     char* program = malloc(1024);
     char** args;
     sprintf(program, "./Aggregate_Votes %s", path);
@@ -70,12 +75,12 @@ char* executeCount(char* path){
     execvp(args[0], args);	//exec
     perror("ERROR DOING EXEC: \n");
   }
-  else if(pid>0){//parent node
+  else if(pid>0){//parent process
     wait(NULL);
     char* votesFile = malloc(1024*sizeof(char));
     char** args;
     int n = makeargv(path, "/", &args);
-    sprintf(votesFile,"%s.txt", args[n-1]);//THIS DOESN'T WORK QUITE RIGHT. IF PATH IS /Documents/Who_Won, THEN OUTPUTFILE WILL BE /Documents/Who_Won.txt
+    sprintf(votesFile,"%s.txt", args[n-1]); //votes file is final output file produced by Aggregate_Votes
     free(*args);
     free(args);
     DIR* direntStream = opendir(path);
@@ -84,7 +89,7 @@ char* executeCount(char* path){
 
     while(1)
     {
-      thisDir = readdir(direntStream);
+      thisDir = readdir(direntStream); // next file in directory
       if(thisDir==NULL){ //end of directory
         break;
       }
@@ -97,7 +102,7 @@ char* executeCount(char* path){
 
         char* temp = malloc(MAX_CANDIDADTES*1024*sizeof(char));
   			size_t length2;
-  			getline(&temp, &length2, read);
+  			getline(&temp, &length2, read); // read line from file
         char* winner = parseWinner(temp); //parseWinner function will take data string and return the string containing the winner's candidateName
         free(temp);
         fclose(read);
@@ -105,15 +110,15 @@ char* executeCount(char* path){
         char* outputString = (char*)malloc(sizeof(char)*(strlen(winner)+10));
         sprintf(outputString, "Winner:%s\n", winner);
         free(winner);
-        fputs(outputString, write);
+        fputs(outputString, write); // write winner to output file
         fclose(write);
         free (outputString);
         free(votesFile);
-
-        return inPath;
+        free(inPath);
+        return 1;
       }
     }
-    return;
+    return -1;
   }
   else{
     perror("ERROR FORKING:\n");
@@ -153,16 +158,20 @@ int containsCycle(char* path){
 }
 
 int main(int argc, char** argv){
-  if(argc != 2){ //checks for proper number of arguments
+  if(argc < NUM_ARGS+1){ //checks for proper number of arguments
     printf("Wrong number of args to Vote_Counter, expected 1, given %d\n", argc - 1);
 		exit(1);
   }
   else {
     int len = strlen(argv[1]);
-    if(argv[1][len-1] == '/'){
+    if(argv[1][len-1] == '/'){ // remove slash on end of path if it exists
       argv[1][len-1] = 0;
     }
-    executeCount(argv[1]);
+    int e = executeCount(argv[1]);
+    if(e == -1){
+      printf("executeCount failed.\n");
+      exit(1);
+    }
     remove("trash.txt");
   }
 

@@ -36,7 +36,7 @@ int isLeaf(char* path){
       break;
     }
     if(strcmp(thisdir->d_name, ".")!=0 && strcmp(thisdir->d_name, "..")!=0){
-			if(thisdir->d_type == DT_DIR){
+			if(thisdir->d_type == DT_DIR){ // if directory contains a subdirectory, it is not a leaf
         leaf = 0;
       }
     }
@@ -90,7 +90,7 @@ void aggregateVotes(char* path){
           int fd = open("trash.txt", O_CREAT|O_WRONLY); //new txt file for child process to print to
           fchmod(fd, 0700);
           lseek(fd, 0, SEEK_END);
-          dup2(fd, STDOUT_FILENO);
+          dup2(fd, STDOUT_FILENO); // redirect output to temporary text file, so child processes don't print to standard output
           if(isLeaf(path)){
             // printf("new leaf path: %s\n", path);
             execl("./Leaf_Counter", "Leaf_Counter", path, (char*)NULL);
@@ -106,7 +106,7 @@ void aggregateVotes(char* path){
           waitpid(pid,0,0);
           sprintf(subresultsfile, "%s/%s/%s.txt", path, subdir->d_name, subdir->d_name);
           // printf("subresultsfile: %s\n", subresultsfile);
-          FILE* subresults = fopen(subresultsfile, "r");
+          FILE* subresults = fopen(subresultsfile, "r"); // open subdirectory results file
           if(subresults == NULL){
             printf("error opening file %s\n", subresultsfile);
             exit(0);
@@ -118,11 +118,7 @@ void aggregateVotes(char* path){
           // printf("line: %s\n", line);
           trimwhitespace(line);
           char** candidateArray;
-          // int p;
-          // for(p=0; p<MAX_CANDIDATES; p++){
-          //   candidateArray[p] = (char*)malloc(1024);
-          // }
-          int n = makeargv(line, ",", &candidateArray);
+          int n = makeargv(line, ",", &candidateArray); // split results by comma
           free(line);
           fclose(subresults);
           if(numberOfCandidates == 0){
@@ -130,10 +126,8 @@ void aggregateVotes(char* path){
             // printf("numCand: %d\n", n);
           }
           int j,k;
-          for(j=0; j<n; j++){
+          for(j=0; j<n; j++){ // aggregate results for each candidate
             char** temp;
-            // temp[0] = (char*)malloc(1024);
-            // temp[1] = (char*)malloc(128);
             makeargv(candidateArray[j], ":", &temp);
             // printf("temp[0]: %s, temp[1]: %s\n", temp[0], temp[1]);
             for(k=0; k<MAX_CANDIDATES; k++){
@@ -166,14 +160,14 @@ void aggregateVotes(char* path){
   sprintf(newresultsfile, "%s/%s.txt", path, args[q-1]);
   free(*args);
   free(args);
-  FILE* newresults = fopen(newresultsfile, "w");
+  FILE* newresults = fopen(newresultsfile, "w"); // open new results file to write to
   if(newresults == NULL){
     printf("error opening file %s\n", newresultsfile);
     exit(0);
   }
   char* output = malloc(MAX_CANDIDATES*(1024+10)*sizeof(char));
   int l=0;
-  while(candidateVotes[l]>0){
+  while(candidateVotes[l]>0){ // print all candidates and their total votes to output
     if(l>0){
       sprintf(output, "%s,%s:%d",output, candidateNames[l], candidateVotes[l]);
     }
@@ -188,7 +182,7 @@ void aggregateVotes(char* path){
     free(candidateNames[m]);
   }
   // printf("output string: %s\n", output);
-  fputs(output, newresults);
+  fputs(output, newresults); // write output to file
   printf("%s\n", newresultsfile);
   free(newresultsfile);
   free(output);
@@ -199,11 +193,11 @@ int main(int argc, char** argv)
 {
   if(argc < NUM_ARGS+1){
     printf("Incorrect number of arguments, expected %d given %d.\n", NUM_ARGS, argc-1);
-    return -1;
+    exit(1);
   }
 
   int len = strlen(argv[1]);
-  if(argv[1][len-1] == '/'){
+  if(argv[1][len-1] == '/'){ // remove slash on end of path if it exists
     argv[1][len-1] = 0;
   }
   if(isLeaf(argv[1])){

@@ -38,14 +38,16 @@ int votesFileCheck(char* path){
     }
     if(strcmp(thisdir->d_name, ".")!=0 && strcmp(thisdir->d_name, "..")!=0){
 			if(thisdir->d_type == DT_DIR){
-        leaf = 0;
+        leaf -= 1;
+      }
+      else if(thisdir->d_type == DT_REG && strcmp(thisdir->d_name, "votes.txt")==0){
+        leaf += 1;
       }
     }
   }
   free(direntStream);
-  if(leaf) return 1;
+  if(leaf==2) return 1;
   else return 0;
-  return 0;
 }
 
 /************************************************************************
